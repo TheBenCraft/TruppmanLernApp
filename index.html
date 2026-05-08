@@ -126,7 +126,7 @@
   <div class="stats-box">
     <div class="stat-row"><span>Richtig:</span><span id="stat-r" class="c-green">0</span></div>
     <div class="stat-row"><span>Falsch:</span><span id="stat-f" class="c-red">0</span></div>
-    <div class="stat-row"><span>Offen:</span><span id="stat-o" class="c-orange">164</span></div>
+    <div class="stat-row"><span>Offen:</span><span id="stat-o" class="c-orange">149</span></div>
   </div>
 </header>
 
@@ -369,7 +369,7 @@ function updateStats() {
   const f = vals.filter(v => v === 'wrong').length;
   document.getElementById('stat-r').innerText = r;
   document.getElementById('stat-f').innerText = f;
-  document.getElementById('stat-o').innerText = 164 - r; // Zeigt an, wieviele Fragen noch zum Sieg fehlen
+  document.getElementById('stat-o').innerText = 149 - r; // Zeigt an, wieviele Fragen noch zum Sieg fehlen
 }
 
 function renderQuestion() {
