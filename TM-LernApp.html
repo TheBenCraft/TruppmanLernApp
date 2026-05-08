@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Feuerwehr TM</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root {
+    --red: #D32F2F; --red-dark: #8B0000; --bg: #0F0F12;
+    --card: #1A1A1F; --item: #25252B; --border: #33333C;
+    --text: #F0F0F5; --muted: #9BA1B0; --correct: #2ECC71;
+    --wrong: #E74C3C; --accent: #F39C12; --safe-top: env(safe-area-inset-top);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif; min-height: 100vh;
+    padding-top: var(--safe-top); line-height: 1.5;
+  }
+
+  /* Header & Stats */
+  header {
+    background: linear-gradient(to bottom, var(--red-dark), var(--red));
+    padding: 20px; display: flex; justify-content: space-between; align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); position: sticky; top: 0; z-index: 1000;
+  }
+
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: 1px; }
+
+  .stats-box {
+    background: rgba(0, 0, 0, 0.4); padding: 8px 12px; border-radius: 10px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .stat-row { display: flex; justify-content: space-between; gap: 10px; }
+  .c-green { color: var(--correct); font-weight: bold; }
+  .c-red { color: var(--wrong); font-weight: bold; }
+  .c-orange { color: var(--accent); font-weight: bold; }
+
+  /* Navigation */
+  nav { display: flex; background: var(--card); margin: 15px; border-radius: 12px; padding: 5px; border: 1px solid var(--border); }
+  .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; border-radius: 8px; transition: 0.3s; }
+  .tab-btn.active { background: var(--red); color: white; }
+
+  main { padding: 0 15px 30px 15px; max-width: 650px; margin: 0 auto; }
+
+  /* Quiz Card */
+  .quiz-card { background: var(--card); border-radius: 20px; padding: 25px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+  .q-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--accent); margin-bottom: 15px; }
+  .q-text { font-size: 1.2rem; font-weight: 600; margin-bottom: 25px; color: #fff; }
+
+  /* Options */
+  .options { display: grid; gap: 12px; }
+  .option { background: var(--item); border: 2px solid var(--border); padding: 18px; border-radius: 14px; display: flex; align-items: center; gap: 15px; transition: 0.2s; }
+  .checkbox { width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+  
+  .option.selected { border-color: var(--accent); }
+  .option.selected .checkbox { background: var(--accent); border-color: var(--accent); }
+  .option.selected .checkbox::after { content: '✓'; color: white; font-weight: bold; }
+
+  .option.reveal { border-color: var(--correct); background: rgba(46, 204, 113, 0.1); }
+  .option.reveal .checkbox { background: var(--correct) !important; border-color: var(--correct) !important; }
+  .option.reveal .checkbox::after { content: '✓'; color: white; display: block; }
+
+  .option.wrong { border-color: var(--wrong); background: rgba(231, 76, 60, 0.1); }
+  .option.wrong .checkbox { background: var(--wrong) !important; border-color: var(--wrong) !important; }
+
+  /* Actions */
+  .actions { margin-top: 30px; display: grid; gap: 12px; }
+  .btn { padding: 18px; border: none; border-radius: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; }
+  .btn:active { transform: scale(0.96); }
+  .btn-primary { background: var(--red); color: white; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  
+  /* RESPONSIVE GRID */
+  .grid { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); 
+    gap: 10px; 
+    margin-top: 10px; 
+  }
+
+  .grid-item { 
+    aspect-ratio: 1; 
+    background: var(--item); 
+    border: 1px solid var(--border); 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    border-radius: 12px; 
+    font-family: 'IBM Plex Mono', monospace; 
+    font-size: 0.9rem;
+    transition: 0.2s;
+  }
+  .grid-item.correct { background: var(--correct); color: #000; font-weight: bold; border-color: var(--correct); }
+  .grid-item.wrong { background: var(--wrong); color: #fff; font-weight: bold; border-color: var(--wrong); }
+  .grid-item:active { background: var(--border); }
+
+  .danger-zone {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border);
+    text-align: center;
+  }
+  .btn-danger { 
+    background: transparent; 
+    color: var(--wrong); 
+    border: 2px solid var(--wrong); 
+    width: 100%;
+    font-size: 0.8rem;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Feuerwehr TM</h1>
+  <div class="stats-box">
+    <div class="stat-row"><span>Richtig:</span><span id="stat-r" class="c-green">0</span></div>
+    <div class="stat-row"><span>Falsch:</span><span id="stat-f" class="c-red">0</span></div>
+    <div class="stat-row"><span>Offen:</span><span id="stat-o" class="c-orange">164</span></div>
+  </div>
+</header>
+
+<nav>
+  <button id="tab-quiz" class="tab-btn active" onclick="switchTab('quiz')">Training</button>
+  <button id="tab-overview" class="tab-btn" onclick="switchTab('overview')">Übersicht</button>
+</nav>
+
+<main>
+  <div id="quiz-view">
+    <div style="display:flex; gap:10px; margin-bottom:15px;">
+        <button class="btn btn-secondary" style="flex:1; padding:10px; font-size:0.75rem;" onclick="toggleRandom()">
+          🔀 Zufall: <span id="rand-txt">AUS</span>
+        </button>
+    </div>
+
+    <div class="quiz-card">
+      <div class="q-header"><span id="q-cat">KATEGORIE</span><span id="q-num">1 / 164</span></div>
+      <div id="q-text" class="q-text">Lade Frage...</div>
+      <div id="options" class="options"></div>
+      <div class="actions">
+        <button id="btn-check" class="btn btn-primary" onclick="checkAnswer()">Antwort prüfen</button>
+        <button id="btn-next" class="btn btn-secondary hidden" onclick="nextQuestion()">Nächste Frage</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="overview-view" class="hidden">
+    <div id="overview-grid" class="grid"></div>
+    <div class="danger-zone">
+      <button class="btn btn-danger" onclick="resetProgress()">
+        🗑️ Lernstand komplett zurücksetzen
+      </button>
+    </div>
+  </div>
+</main>
+
+<script>
+const questions = [
+  // --- RECHTSGRUNDLAGEN (RG) ---
+  { id: 'RG1', cat:"Recht", q: 'Die Gemeinden haben in ihrem Gebiet die Aufgaben,', opts: ['eine leistungsfähige Feuerwehr aufzustellen.', 'die Aus- und Fortbildung der Feuerwehrangehörigen sicherzustellen.', 'eine Feuerwehrtechnische Zentrale (FTZ) einzurichten.', 'den Brandschutz und Hilfeleistung sicherzustellen.'], correct: [0, 1, 3] },
+  { id: 'RG2', cat:"Recht", q: 'Aktive Mitglieder der Freiwilligen Feuerwehren sind verpflichtet,', opts: ['Arbeiten zum Auspumpen von Baugruben im Rahmen von Bauarbeiten durchzuführen.', 'an Brandbekämpfungs- und Hilfeleistungseinsätzen teilzunehmen.', 'durch den Ortsbrandmeister angesetzten, nicht dienstlichen Veranstaltungen teilzunehmen.', 'Sicherungsmaßnahmen bei Laternenumzügen im eigenen Ermessen durchzuführen.'], correct: [1] },
+  { id: 'RG3', cat:"Recht", q: 'Berufsfeuerwehren müssen aufgestellt werden', opts: ['in Städten mit mehr als 100.000 Einwohnern.', 'in Städten mit viel Industrie und mehr als 50.000 Einwohnern.', 'in Städten ohne Freiwillige Feuerwehren.', 'in Städten mit besonders hohem Gefahrenpotenzial und einer anerkannten Werkfeuerwehr.'], correct: [0] },
+  { id: 'RG4', cat:"Recht", q: 'Feuerwehrangehörige dürfen im Einsatz', opts: ['eine Straßensperrung vornehmen.', 'grundsätzlich keine Eingriffe in den Straßenverkehr vornehmen, da es in den Zuständigkeitsbereich der Polizei fällt.', 'den Verkehr im Bereich von Einsatzstellen regeln (Verkehrslenkung und -leitung).', 'beliebig in den Straßenverkehr eingreifen, sofern der Einsatzleiter dies anfordert.'], correct: [0] },
+  { id: 'RG5', cat:"Recht", q: 'Im Alarmfall besteht für aktive Mitglieder einer Freiwilligen Feuerwehr die Verpflichtung,', opts: ['beim Ortsbrandmeister telefonisch zurückzurufen.', 'sich unverzüglich am Feuerwehrhaus einzufinden.', 'sich während der Arbeitszeit nach Möglichkeit beim Arbeitgeber abzumelden.', 'sich bei der Leitstelle nach der Dringlichkeit zu erkundigen.'], correct: [1, 2] },
+  { id: 'RG6', cat:"Recht", q: 'Die Aufnahme als aktives Mitglied in die Freiwillige Feuerwehr', opts: ['ist ab einem Alter von zehn Jahren möglich.', 'ist ab einem Alter von sechzehn Jahren möglich.', 'ist ab 35 Jahren nicht mehr möglich.', 'ist ggf. von der Einschätzung eines ermächtigten Arztes abhängig.'], correct: [1, 3] },
+  { id: 'RG7', cat:"Recht", q: 'Aufgaben der Gemeinden und Landkreise nach dem Nds. Brandschutzgesetz sind', opts: ['Brandschutz und Hilfeleistung.', 'Brandschutz und Rettungsdienst.', 'Brandschutz und Krankentransport.', 'Zivilschutzbezogene Aufgaben (Schulung THW).'], correct: [0] },
+  { id: 'RG8', cat:"Recht", q: 'Die Freiwillige Feuerwehr einer Stadt bzw. Gemeinde wird geleitet durch', opts: ['den Stadt-/Gemeindebrandmeister.', 'den Stadt-/Gemeindedirektor.', 'den zuständigen Abschnittsleiter.', 'den vom Feuerschutzausschuss ernannten Ehrenbeamten.'], correct: [0] },
+  { id: 'RG9', cat:"Recht", q: 'Der feuerwehrtechnische Aufsichtsbeamte des Landkreises ist', opts: ['der Oberkreisdirektor.', 'der Kreisbrandmeister.', 'der Brandschutzprüfer.', 'der Kreisbrandinspektor.'], correct: [1] },
+  { id: 'RG10', cat:"Recht", q: 'Im Einsatz bei der Anfahrt zum Feuerwehrhaus mit Kraftfahrzeugen', opts: ['ist die Schnelligkeit oberstes Gebot.', 'ist im Interesse der Sicherheit immer besonders vorsichtig und umsichtig zu fahren.', 'gilt der Grundsatz: Sicherheit vor Schnelligkeit.', 'ist auf Sonderrechte zu verzichten, da andere diese nicht erkennen.'], correct: [1, 2, 3] },
+  { id: 'RG11', cat:"Recht", q: 'Im Alarmfall dürfen nur Feuerwehrangehörige ausrücken,', opts: ['die zwar Alkohol getrunken haben, sich aber fit fühlen.', 'die krankgeschrieben sind, wenn es der Zustand zulässt.', 'die uneingeschränkt körperlich und geistig tauglich sind.', 'die Drogen konsumiert haben, sich aber fit fühlen.'], correct: [2] },
+
+  // --- BRENNEN UND LÖSCHEN (BL) ---
+  { id: 'BL1', cat:"Brennen/Löschen", q: 'Eine Löschwirkung kann durch', opts: ['den Entzug von Sauerstoff erzielt werden.', 'den Entzug von Wärme erzielt werden.', 'die Zuführung von Luft erzielt werden.', 'nur durch den Entzug von Wärme und Sauerstoff erzielt werden.'], correct: [0, 1] },
+  { id: 'BL2', cat:"Brennen/Löschen", q: 'Eine Verbrennung ist eine', opts: ['schnell ablaufende Reaktion zwischen brennbarem Stoff und CO2.', 'schnell ablaufende Oxidation unter Licht- und Wärmeerscheinung.', 'Oxidbildung bei Metallen (Rosten).', 'schnell verlaufende Reduktion eines brennbaren Stoffs.'], correct: [1] },
+  { id: 'BL3', cat:"Brennen/Löschen", q: 'Benzin wird der', opts: ['Brandklasse A zugeordnet.', 'Brandklasse B zugeordnet.', 'Brandklasse C zugeordnet.', 'Brandklasse F zugeordnet.'], correct: [1] },
+  { id: 'BL4', cat:"Brennen/Löschen", q: 'Das Löschmittel Wasser darf nicht eingesetzt werden', opts: ['bei Spannungen bis 1000 Volt.', 'bei Metallbränden.', 'bei brennenden Fritteusen.', 'wenn ein geringer Wasserschaden entstehen könnte.'], correct: [1, 2] },
+  { id: 'BL5', cat:"Brennen/Löschen", q: 'Zur Bekämpfung von Bränden der Brandklasse A ist', opts: ['Wasser geeignet.', 'Kohlenstoffmonoxid geeignet.', 'Glutbrandpulver nicht einzusetzen.', 'nur ein Löschmittel mit "X"-Kennzeichnung zu nutzen.'], correct: [0] },
+  { id: 'BL6', cat:"Brennen/Löschen", q: 'Zur Brandklasse C gehören', opts: ['feste, brennbare Stoffe', 'flüssige, brennbare Stoffe', 'gasförmige, brennbare Stoffe', 'Dämpfe brennbarer Flüssigkeiten'], correct: [2] },
+  { id: 'BL7', cat:"Brennen/Löschen", q: 'Nur mit Glut verbrennen', opts: ['Holz, Kohle, Papier', 'Holzkohle, Koks', 'Wachs, Stearin, Fett', 'Hartwachs und entgaste Kohle'], correct: [1] },
+  { id: 'BL8', cat:"Brennen/Löschen", q: 'Zur Brandklasse A gehören', opts: ['feste brennbare Stoffe', 'flüssige brennbare Stoffe', 'gasförmige brennbare Stoffe', 'anorganische nicht brennbare Stoffe'], correct: [0] },
+  { id: 'BL9', cat:"Brennen/Löschen", q: 'Die Hauptlöschwirkung des Wassers besteht im', opts: ['Kühlen', 'Ersticken', 'Verdünnen', 'Abmagern'], correct: [0] },
+  { id: 'BL10', cat:"Brennen/Löschen", q: 'Mit Flamme und Glut brennen-', opts: ['Holz, Kohle, Papier', 'Metalle', 'Wachs, Stearin, Fett', 'Gase'], correct: [0] },
+  { id: 'BL11', cat:"Brennen/Löschen", q: 'Grundvoraussetzungen für einen Verbrennungsvorgang sind unter anderem-', opts: ['brennbarer Stoff, Sauerstoff, Zündtemperatur, richtiges Mengenverhältnis', 'Sauerstoff, Flammtemperatur, Oberflächenspannung', 'Stickstoff, richtiges Mengenverhältnis, brennbarer Stoff, Funken', 'Katalysatoren, brennbarer Stoff, spezifische Oberflächen, richtige Reaktionstemperatur'], correct: [0] },
+  { id: 'BL12', cat:"Brennen/Löschen", q: 'Für welche Stoffe gilt nebenstehendes Bildzeichen?', opts: ['Brände von Metallen-', 'Brennbare Gase', 'Brennbare flüssige Stoffe', 'Brennbare Chemikalien'], correct: [1] },
+  { id: 'BL13', cat:"Brennen/Löschen", q: 'Leichtentzündliche Stoffe sind', opts: ['Stoffe, die ohne äußere Energiezufuhr zur Entzündung kommen', 'Stoffe, die auf 100° C erwärmt werden müssen, um zu brennen', 'Stoffe, die durch kurzzeitige Einwirkung einer Zündquelle leicht entzündet werden können und nach deren Entfernung weiter brennen oder weiter glimmen', 'auf Warntafeln mit einem „X“ vor der Gefahrnummer zu kennzeichnen'], correct: [2] },
+  { id: 'BL14', cat:"Brennen/Löschen", q: 'Folgende(s) Löschmittel dürfen/darf bei Schornsteinbränden nicht eingesetzt werden:', opts: ['ABC-Löschpulver', 'BC-Löschpulver', 'Wasser', 'Sand'], correct: [2] },
+  { id: 'BL15', cat:"Brennen/Löschen", q: 'Speiseöle, die Anwendung in einer Fritteuse finden, werden der', opts: ['Brandklasse A zugeordnet', 'Brandklasse B zugeordnet', 'Brandklasse C zugeordnet', 'Brandklasse F zugeordnet'], correct: [2] },
+  { id: 'BL16', cat:"Brennen/Löschen", q: 'Folgende brennbare Stoffe dürfen nicht mit Wasser gelöscht werden:', opts: ['Chemikalien, die mit Wasser heftig reagieren', 'Benzin, Leichtmetalle', 'Holz, Kohle, Papier', 'Stoffe, bei denen ein „X“ vor der Gefahrnummer steht'], correct: [0, 1, 3] },
+  
+  // --- FAHRZEUGKUNDE (FK) ---
+  { id: 'FK1', cat:"Fahrzeuge", q: 'Löschfahrzeuge haben gemäß Einteilung EN 1846-1 den Einsatzzweck:', opts: ['Taktische Einheiten zu Führen', 'Brandbekämpfung', 'Retten von Menschen aus größeren Höhen', 'Einfache technische Hilfeleistung'], correct: [1,3] },
+  { id: 'FK2', cat:"Fahrzeuge", q: 'Speziell für technische Hilfeleistungen größeren Umfangs sind', opts: ['Löschgruppenfahrzeuge geeignet', 'Tanklöschfahrzeuge geeignet', 'Rüstwagen geeignet', 'alle Feuerwehrfahrzeuge geeignet, die einen speziellen Rüstsatz mitführen'], correct: [2] },
+  { id: 'FK3', cat:"Fahrzeuge", q: 'Ein TSF hat eine ausreichende feuerwehrtechnische Beladung für', opts: ['einen selbstständigen Trupp.', 'eine Löschgruppe.', 'maximal eine Löschstaffel.', 'Einsätze technischer Hilfe größeren Umfangs.'], correct: [1] },
+  { id: 'FK4', cat:"Fahrzeuge", q: 'Die Abkürzung FPN 10-1000 bedeutet', opts: ['Feuerpumpe, 800 l/min bei 8 MPa.', 'Feuerlöschkreiselpumpe, 1000 l/min bei 10 bar.', 'Feuerlöschkreiselpumpe, 1000 bar bei 10 l/min.', 'fest eingebaute Pumpe.'], correct: [1, 3] },
+  { id: 'FK5', cat:"Fahrzeuge", q: 'Auf einem LF 10 wird/werden mitgeführt', opts: ['die vierteilige Steckleiter', 'die zweiteilige Schiebleiter', 'die vierteilige Schiebleiter und die dreiteilige Steckleiter', 'die zweiteilige Schiebleiter und die Multifunktionsleiter'], correct: [0] },
+  { id: 'FK6', cat:"Fahrzeuge", q: 'Zu den Tanklöschfahrzeugen zählt/zählen', opts: ['das LF 10', 'das TLF 2000', 'das TSF-W', 'alle Fahrzeuge mit eingebautem Löschwasserbehälter'], correct: [1] },
+  { id: 'FK7', cat:"Fahrzeuge", q: 'Der Löschwasserbehälter im TLF 3000 enthält mindestens', opts: ['1600 l.', '2400 l.', '3000 l.', '5000 l.'], correct: [2] },
+  { id: 'FK8', cat:"Fahrzeuge", q: 'Die Abkürzung PFPN 10-1000 steht für', opts: ['eine tragbare Feuerlöschkreiselpumpe.', '1000 l/min bei 10 bar.', 'eine fest eingebaute Kolbenpumpe.', 'tragbare Strahlpumpe.'], correct: [0, 1] },
+  { id: 'FK9', cat:"Fahrzeuge", q: 'Zur Gruppe der Löschgruppenfahrzeuge zählt', opts: ['das LF 20', 'das TLF 2000', 'das TSF-W', 'der GW-L 2'], correct: [0] },
+  { id: 'FK10', cat:"Fahrzeuge", q: 'Zu den Tragkraftspritzenfahrzeugen zählt/zählen das', opts: ['LF 10', 'TSF-W', 'TroTLF', 'TSF'], correct: [1, 3] },
+  { id: 'FK11', cat:"Fahrzeuge", q: 'Eine DLAK 23-12 ist:', opts: ['ein Hubrettungsfahrzeug mit Allradantrieb', 'ein Hubrettungsfahrzeug mit automatischen Leiterbewegungen', 'ein Hubrettungsfahrzeug mit Automatikgetriebe', 'ein Hubrettungsfahrzeug mit einer Nennrettungshöhe von 12 m'], correct: [1] },
+  { id: 'FK12', cat:"Fahrzeuge", q: 'Ein MLF', opts: ['ist ein Löschfahrzeug mit Staffelbeladung und Gruppenbesatzung', 'muss über eine PFPN 10-1000 verfügen', 'ist ein Löschfahrzeug mit Beladung für eine Gruppe', 'ist kein genormtes Löschfahrzeug'], correct: [2] },
+  { id: 'FK13', cat:"Fahrzeuge", q: 'Das TLF 4000 ist ein Löschfahrzeug, das', opts: ['mindestens 4000 l Löschwasser mitführt', 'über eine dreiteilige Schiebleiter verfügen muss', 'mindestens eine Staffelbesatzung mitführen muss', 'über einen Schaummitteltank mit mindestens 500 l Inhalt verfügen muss'], correct: [0, 3] },
+  
+  // --- GERÄTEKUNDE (GK) ---
+  { id: 'GK_PA1', cat:"Schutzausrüstung", q: 'Zur persönlichen Schutzausrüstung (Mindestschutz) gehören', opts: ['Schutzanzug und Beleuchtungsgerät.', 'Schutzanzug und Schutzhandschuhe.', 'Schutzhelm und Atemschutzgerät.', 'Gesichtsschutz und Haltegurt.'], correct: [1] },
+  { id: 'GK_PA2', cat:"Schutzausrüstung", q: 'Warnkleidung (Warnweste) ist zu tragen', opts: ['bei schlechten Sichtverhältnissen.', 'bei Gefahrguteinsätzen.', 'bei Tätigkeiten im Straßenverkehr.', 'bei entsprechender Anordnung des GF.'], correct: [0, 2, 3] },
+  { id: 'GK_PA3', cat:"Schutzausrüstung", q: 'Ergänzungen zur persönlichen Schutzausrüstung für den Löscheinsatz (Innenangriff) ist/sind', opts: ['Feuerwehrhaltegurt mit Feuerwehrbeil', 'Feuerwehrleine mit Feuerwehrleinenbeutel', 'Atemschutzgerät', 'Kontaminationsschutzanzug'], correct: [0, 1, 2] },
+  { id: 'GK_PA4', cat:"Schutzausrüstung", q: 'Ergänzungen zur persönlichen Schutzausrüstung für den Hilfeleistungseinsatz ist/sind', opts: ['Warnkleidung', 'die Schutzbrille', 'der Gehörschutz', 'Schnittschutzkleidung'], correct: [0, 1, 2, 3] },
+  { id: 'GK_PA5', cat:"Schutzausrüstung", q: 'Der Gesichtsschutz zum Feuerwehrhelm (Klappvisier) ist zu verwenden', opts: ['bei Gefahren für das Gesicht und die Augen', 'bei Gefahren bspw. durch Splitter', 'bei Gefahren durch wegschnellende Teile', 'bei Gefahren durch Funken oder Spritzer gefährlicher Stoffe'], correct: [0, 1, 2, 3] },
+  { id: 'GK_PA6', cat:"Schutzausrüstung", q: 'Beim Einsatz eines Brennschneidgerätes bzw. Plasmaschneidgerätes sind speziell hierfür vorgesehene, zum Zubehör des Gerätes gehörende Schutzbrillen zu tragen. Diese schützen die Augen vor Fremdkörpern und vor ultravioletter Strahlung. Der Gesichtsschutz (Klappvisier) sollte hierbei nicht verwendet werden', opts: ['um den Träger nicht zusätzlich zu behindern', 'da ein umfassender Schutz der Augen nicht gegeben ist', 'um einer möglichen Ventilation von Atemgiften über dem Helm vorzubeugen', 'um Kosten zu sparen'], correct: [1] },
+  { id: 'GK_PA7', cat:"Schutzausrüstung", q: 'Hitzeschutzkleidung schützt vorgehende Einsatzkräfte bei der Brandbekämpfung vorrangig gegen', opts: ['einen Fliehkraftzerfall', 'herumfliegende Splitter', 'Strahlungswärme', 'tiefkalte, verflüssigte Gase'], correct: [3] },
+  { id: 'GK_PA8', cat:"Schutzausrüstung", q: 'Beim Gebrauch der Feuerwehr-Einsatzüberjacke ist darauf zu achten, dass', opts: ['die Jacke nach einem Einsatz ggf. gereinigt und imprägniert werden mus', 'die Jacke nach einem Einsatz nicht in Sozialräumen (z.B. Kantine) getragen werden soll, um eine Kontaminationsverschleppung zu unterbinden', 'die Jacke den gültigen Normenstandards entspricht', 'die Jacke bei Beschädigungen ggf. ausgesondert werden muss'], correct: [0, 1, 2, 3] },
+  { id: 'GK_PA9', cat:"Schutzausrüstung", q: 'Abweichungen zur persönlichen Schutzausrüstung sind entsprechend', opts: ['auf Befehl des Einheitsführers möglich', 'auf Befehl des Einheitsführers nicht möglich', 'auf Befehl des Landesbranddirektors möglich', 'auf Befehl des Einheitsführers möglich'], correct: [0] },
+  
+  { id: 'GK_L1', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein formstabiler Schlauch für Pumpen und Fahrzeuge ist', opts: ['ein Schlauch für Schaumeinsatz.', 'ein formstabiler Druckschlauch (z.B. Haspel).', 'ein Schlauch nur zum Ansaugen.', 'nicht flach aufrollbar.'], correct: [1, 3] },
+  { id: 'GK_L2', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein B-Druckschlauch hat einen Innendurchmesser (Nennweite) von', opts: ['7,5 m', '7,5 mm', '75 mm', '7,5 dm'], correct: [2] },
+  { id: 'GK_L3', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Bei einem „Mehrzweckstrahlrohr“ handelt es sich um ein', opts: ['Strahlrohr für Voll- und Sprühstrahl', 'Strahlrohr für Sprüh- und Mittelschaumstrahl', 'Strahlrohr mit B-, C- oder D-Kupplung', 'Strahlrohr, welches für unterschiedliche Zwecke (Löschwasserentnahme, -fortleitung und –abgabe) Verwendung findet'], correct: [0, 2] },
+  { id: 'GK_L4', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Am mittleren Ausgangsstutzen des Verteilers (B-CBC) ist', opts: ['ein B/C-Übergangsstück angekuppelt', 'ein A/C-Übergangsstück angekuppelt', 'ein A/B-Übergangsstück angekuppelt', 'ein C/D-Übergangsstück angekuppelt'], correct: [0] },
+  { id: 'GK_L5', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein C-Mehrzweckstrahlrohr mit Mundstück hat bei einem Druck von 4 bar eine Wasserdurchflussmenge pro Minute von', opts: ['ca. 200 l-', 'ca. 100 l', 'ca. 300 l', 'ca. 400 l'], correct: [1] },
+  { id: 'GK_L6', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Eine Wasserstrahlpumpe', opts: ['kann zum Fördern von flüssigen Gefahrstoffen eingesetzt werden', 'dient der Entleerung von Kellern, Schächten, Baugruben etc', 'funktioniert nach dem Injektor-Prinzip', 'dient der Förderung von Wasser über lange Wegstrecke'], correct: [1, 2] },
+  { id: 'GK_L7', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein B-Mehrzweckstrahlrohr mit Mundstück hat bei 4 bar Strahlrohrdruck eine Wasserdurchflussmenge von', opts: ['ca. 400 l/min', 'ca. 300 l/min', 'ca. 600 l/min', 'ca. 500 l/min'], correct: [1] },
+  { id: 'GK_L8', cat:"Löschgeräte, Schläuche, Armaturen", q: 'B-Druckschläuche können nach Norm wie folgt bemessen sein:', opts: ['85 mm Nennweite; 20 m und 30 m Schlauchlänge', '75 mm Nennweite; 5 m, 20 m und 35 m Schlauchlänge', '75 mm Nennweite; 15 m und 30 m Schlauchlänge', '52 mm Nennweite; 20 m und 30 m Schlauchlänge (nur bei B-52)'], correct: [1] },
+  { id: 'GK_L9', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Zu den wasserführenden Armaturen zählen', opts: ['Standrohr, Saugkorb, Sammelstück und Verteiler', 'Kübelspritze, Wasserlöscher, Entlüftungseinrichtung', 'Tauchpumpe, Hydrantenschlüssel, Auffülltrichter', 'Schlauchkupplungen, Strahlrohre, Verteiler, Entlüftungseinrichtung'], correct: [0] },
+  { id: 'GK_L10', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Zum Halten eines B-Strahlrohres mit Stützkrümmer sind mindestens', opts: ['zwei Feuerwehrleute erforderlich', 'drei bis vier Feuerwehrleute erforderlich', 'ein kräftiger Feuerwehrmann erforderlich', 'Einsatzkräfte nach Weisung des Gruppenführers, mindestens einer'], correct: [0] },
+  { id: 'GK_L11', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein A-Saugschlauch mit der Kennzeichnung A-110-1500-K hat einen Innendurchmesser von', opts: ['10 cm', '95 mm', '110 mm', '120 mm'], correct: [2] },
+  { id: 'GK_L12', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Bei einem Mehrzweckstrahlrohr gibt es die Schaltstellungen', opts: ['nur Vollstrahl und Sprühstrahl', 'Vollstrahl, Sprühstrahl und Wasser halt', 'Vollstrahl und Wasser halt', 'Hohlstrahl, Vollstrahl, Kegelstrahl'], correct: [1] },
+  { id: 'GK_L13', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Das Standrohr dient zur', opts: ['Wasserentnahme aus Unterflurhydranten', 'Wasserentnahme aus Überflurhydranten', 'Straßenüberführung von Schlauchleitungen', 'Stabilisierung von Strahlrohren beim stationären Einsatz'], correct: [0] },
+  { id: 'GK_L14', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Die Kübelspritze dient zum/zur', opts: ['Löschen eines Großbrandes', 'Ablöschen von Brandnestern und Entstehungsbränden', 'Begrenzung möglicher Löschwasserschäden', 'Löschen von Benzinbränden'], correct: [1, 2] },
+  { id: 'GK_L15', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein Schaumrohr wird am Verteiler angeschlossen', opts: ['am mittleren Ausgangsstutzen / an der mittleren Kupplung', 'nur bei Vornahme eines Schaumrohres S 4', 'nach Reihenfolge der eingesetzten Rohre', 'nach Vorgabe des Gruppenführers'], correct: [0] },
+  { id: 'GK_L16', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Für die Inbetriebnahme eines Unterflurhydranten werden', opts: ['Standrohr und Unterflurhydrantenschlüssel benötigt', 'Sammelstück und Kupplungsschlüssel benötigt', 'Standrohr und Feuerwehrschlüssel benötigt', 'Ausrüstungsteile nach Vorgabe des Gruppenführers benötigt'], correct: [0] },
+  { id: 'GK_L17', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Beispiele für genormte Schläuche ist/sind', opts: ['der Saugschlauch', 'der Druckschlauch', 'formstabile Druckschläuche für Pumpen und Feuerwehrfahrzeuge', 'Flachschläuche für Wandhydranten'], correct: [0, 1, 2, 3] },
+  { id: 'GK_L18', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein Schild mit der Beschriftung "H 100" weist auf', opts: ['einen Hydranten für die Löschwasserentnahme in 100 m Entfernung hin', 'einen Hydranten für Löschwasser mit einer Ergiebigkeit von 100 l/min hin', 'einen Hydranten hin, der auf einer Versorgungsleitung von 100 mm Innendurchmesser montiert ist', 'einen Hydranten hin, für den ein Hydrantenschlüssel NW 100 mm erforderlich ist'], correct: [2] },
+  { id: 'GK_L19', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Ein Standrohr mit passendem Schlüssel wird gebraucht zur Inbetriebnahme von', opts: ['Überflurhydranten', 'Wandhydranten', 'Unterflurhydranten', 'gegen Missbrauch gesicherten Hydranten'], correct: [2] },
+  { id: 'GK_L20', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Welche Schaltmöglichkeiten müssen bei einem genormten Hohlstrahlrohr gegeben sein?', opts: ['Strahlrohr auf/dreiviertel-zu', 'Strahlrohr auf/zu und Durchflussmengeneinstellung', 'Strahlrohr auf/zu und Einstellmöglichkeit der Wasserstrahlform', 'Strahlrohr auf/zu, Einstellmöglichkeit der Wasserstrahlform und Durchflussmengeneinstellung'], correct: [3] },
+  { id: 'GK_L21', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Für das Anschließen an Leitungen an den Verteiler gilt gemäß nebenstehender Abbildung', opts: ['Anschluss A = 2. Rohr', 'Anschluss C = 1. Rohr', 'Anschluss B = 3. Rohr', 'Anschluss B = B-Rohr bzw. Schaumrohr'], correct: [2, 3] },
+  { id: 'GK_L22', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Bei der Handhabung eines B-Strahlrohres gilt:', opts: ['Der Truppführer und der Truppmann kuppeln das B-Strahlrohr mit Stützkrümmer an den B-Druckschlauch an', 'Der Truppführer und der Truppmann kuppeln das B-Strahlrohr ohne Stützkrümmer an den B-Druckschlauch an', 'Die Entfernung des Mundstückes erfolgt nur auf den Befehl des Einheitsführers', 'Sicherheitsabstände im Löscheinsatz in elektrischen Anlagen gelten nur ab einem Strahlrohrdruck von sechs bar'], correct: [0, 2] },
+  { id: 'GK_L23', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Folgende Sicherheitshinweise beim Einsatz von Hohlstrahlrohren finden im Einsatz Beachtung:', opts: ['Sicherheitsabstände im Löscheinsatz müssen in elektrischen Anlagen beachtet werden!', 'Sicherheitsabstände im Löscheinsatz müssen in elektrischen Anlagen nicht beachtet werden!', 'der vorgehende Trupp muss mit der Bedienung und den Besonderheiten des Hohlstrahlrohres vertraut sein', 'Der vorgehende Trupp muss nicht mit der Bedienung und den Besonderheiten des Hohlstrahlrohres vertraut sein'], correct: [0, 2] },
+  { id: 'GK_L24', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Für die Handhabung des tragbaren Zumischers gilt:', opts: ['Der Zumischer wird in Richtung des Pfeils auf dem Zumischer zwischen Verteiler und das Schaumstrahlrohr in die Druckschlauchleitung eingekuppelt', 'Die Dosiereinrichtung wird generell auf 5% Zumischrate eingestellt', 'Der Ansaugschlauch findet nur in Ausnahmesituationen Verwendung', 'Der Zumischer muss nach dem Einsatz gründlich gespült werden'], correct: [0, 3] },
+  { id: 'GK_L25', cat:"Löschgeräte, Schläuche, Armaturen", q: 'Welches der nachfolgenden Mehrzweckstrahlrohre ist das Kleinste?', opts: ['AM', 'BM', 'CM', 'DM'], correct: [3] },
+  
+  { id: 'GK_R1', cat:"Rettungsgeräte", q: 'Genormte tragbare Leitern sind', opts: ['Klappleiter, Steckleiter, Hakenleiter, 3-teilige Schiebleiter.', 'Steckleiter, Klappleiter, Trittleiter.', 'Steckleiter, 2-teilige Schiebleiter, Trittleiter, Strickleiter.', 'Steckleiter, Klappleiter, Multifunktionsleiter, Hakenleiter.'], correct: [0, 3] },
+  { id: 'GK_R2', cat:"Rettungsgeräte", q: 'Mit der 4-teiligen Steckleiter ist erreichbar:', opts: ['8,40 Meter Rettungshöhe.', 'das 2. Obergeschoss.', 'das 3. Obergeschoss.', 'das 1. OG bei 90° Anstellwinkel.'], correct: [1] },
+  { id: 'GK_R3', cat:"Rettungsgeräte", q: 'Die Feuerwehrleine wird Personen zu Rettungszwecken in Form', opts: ['eines Rettungsbundes angelegt', 'eines Kreuzknotens angelegt', 'eines Mastwurfes angelegt', 'eines Rettungsknotens angelegt'], correct: [0] },
+  { id: 'GK_R4', cat:"Rettungsgeräte", q: 'Zum Retten und Selbstretten dürfen', opts: ['Mehrzweckleinen verwendet werden', 'Feuerwehrleinen verwendet werden', 'alle vorhandenen Leinen verwendet werden', 'geprüfte und hierfür zugelassene Leinen verwendet werden'], correct: [1, 3] },
+  { id: 'GK_R5', cat:"Rettungsgeräte", q: 'Die Feuerwehrleine dient als', opts: ['Rettungs- und Führungsleine', 'Halte- und Ventilleine', 'Absperr- und Abschleppleine', 'Mehrzweckleine'], correct: [0] },
+  { id: 'GK_R6', cat:"Rettungsgeräte", q: 'Eine Steckleiter kann in Stellung gebracht werden durch', opts: ['den Schlauchtrupp und Melder', 'den Wassertrupp und Melder', 'den vom Gruppenführer beauftragten Trupp und Melder', 'Maschinist und Melder'], correct: [0, 1, 3] },
+  { id: 'GK_R7', cat:"Rettungsgeräte", q: 'Steckleiterteile werden durch', opts: ['Beschläge gesichert', 'Federfeststellvorrichtung gesichert', 'Federsperrbolzen gesichert', 'Feuerwehrleinen in bestimmten Fällen gesichert'], correct: [2, 3] },
+  { id: 'GK_R8', cat:"Rettungsgeräte", q: 'Es dürfen', opts: ['max. drei Steckleiterteile zusammengesteckt werden', 'max. vier Steckleiterteile zusammengesteckt werden', 'max. fünf Steckleiterteile zusammengesteckt werden', 'eine unbegrenzte Anzahl von Steckleiterteilen nach der Vorgabe des Einsatzleiters zusammengesteckt werden'], correct: [1] },
+  { id: 'GK_R9', cat:"Rettungsgeräte", q: 'Beim Aufstellen von tragbaren Leitern ist auf', opts: ['einen richtigen Anstellwinkel von ca. 65° bis 75° (mit angewinkeltem Arm prüfen) zu achten', 'erforderliche Mindestabstände zu elektrischen Freileitungen zu achten', 'einen ausreichend festen Untergrund zu achten', 'einen sicheren Stand zu achten'], correct: [0, 1, 2, 3] },
+  { id: 'GK_R10', cat:"Rettungsgeräte", q: 'Die Feuerwehrleine', opts: ['dient zum Einfangen von Tieren', 'dient als Halteleine für die Saugleitung', 'ist ein Rettungsgerät, das zur ergänzenden persönlichen Ausrüstung gehört', 'dient in bestimmten Fällen als Auffangsicherung'], correct: [2] },
+  { id: 'GK_R15', cat:"Rettungsgeräte", q: 'Die Möglichkeiten zur Rettung in Verbindung mit dem Gerätesatz Absturzsicherung beschränken sich auf:', opts: ['Erstsicherung des zu Rettenden und lebensrettende Sofortmaßnahmen, die sich auf Erhaltung bzw. Wiederherstellung von Atmung, Kreislauf und Herztätigkeit richten', 'gesichertes Zurückführen aus dem absturzgefährdeten Bereich nur, wenn die zu rettende Person dazu in der Lage ist. Dabei ist der zu rettenden Person ein Auffanggurt anzulegen', 'Ablassen einer Person nach einem Sturz ins Sicherungsseil', 'Selbstrettung'], correct: [0, 1, 2, 3] },
+  { id: 'GK_R16', cat:"Rettungsgeräte", q: 'Beim Einsatz eines Sprungpolsters ist auf folgende(n) Grundsatz/Grundsätze zu achten', opts: ['Das Retten mit dem Sprungpolster ist nur zulässig bis zur jeweils bauartbedingten Rettungshöhe', 'Für das Bedienen und das In-Stellung-Bringen des Sprungpolsters wird eine Bedienmannschaft von mindestens sechzehn Feuerwehrangehörigen benötigt', 'Das Sprungpolster darf nicht durch scharfe und heiße Gegenstände beschädigt werden', 'Nach erfolgtem Sprung ist die Person sofort aus dem Sprungpolster zu befreien und das Sprungpolster neu auszurichten'], correct: [0, 2, 3] },
+  { id: 'GK_R17', cat:"Rettungsgeräte", q: 'Mit der dreiteiligen Schiebleiter ist', opts: ['eine Rettungshöhe von 13.40 m erreichbar', 'das zweite Obergeschoss erreichba', 'das dritte Obergeschoss erreichbar', 'das vierte Obergeschoss bei einem Anstellwinkel von 90° erreichbar'], correct: [2] },
+  { id: 'GK_R18', cat:"Rettungsgeräte", q: 'Die Multifunktionsleiter', opts: ['ist Standardbeladung auf einem HLF 20', 'ist Standardbeladung auf einem RW', 'ist keine genormte Leiter der Feuerwehr', 'gehört nicht zur Standardbeladung von Feuerwehrfahrzeugen'], correct: [1] },
+  { id: 'GK_R19', cat:"Rettungsgeräte", q: 'Beim Einsatz einer Feuerwehrleine ist zu beachten, dass', opts: ['nur neue Leinen eingesetzt werden', 'vor Übungen und nach jeder Benutzung eine Sichtprüfung vom Benutzer durchgeführt wird', 'benutzte Leinen immer dem Gerätewart übergeben werden', 'beschädigte Leinen nicht eingesetzt werden'], correct: [1, 3] },
+  { id: 'GK_R20', cat:"Rettungsgeräte", q: 'Bei Selbstrettungsübungen mit Feuerwehrleinen ist darauf zu achten, dass', opts: ['eine zweite Leine als Sicherungsleine benutzt werden muss', 'zur Sicherheit ein Sprungtuch oder -polster vorgenommen wird', 'die maximale Rettungshöhe von 8 m nicht überschritten wird', 'die Sicherungsleine an einem stabilen Befestigungspunkt angeschlagen wird'], correct: [0, 2] },
+  { id: 'GK_R21', cat:"Rettungsgeräte", q: 'Rettungs- und Selbstrettungsübungen dürfen durchgeführt werden bis', opts: ['zu max. 8,0 m Höhe', 'max. zum 1. Obergeschoss', 'zu max. 6,0 m Höhe', 'zu einer durch den Übungsleiter vorzugebenden Höhe'], correct: [0] },
+  { id: 'GK_R22', cat:"Rettungsgeräte", q: 'Feuerwehrangehörige werden bei Selbstrettungsübungen gesichert durch', opts: ['eine Feuerwehrleine', 'einen Sprungretter', 'eine Aufsichtsperson', 'ein Kernmanteldynamikseil und Auffanggurt'], correct: [0, 3] },
+  { id: 'GK_R23', cat:"Rettungsgeräte", q: 'Welche der aufgeführten Geräte dürfen zum Aufbau einer Standplatzsicherung verwendet werden?', opts: ['Sicherungsseil am Feuerwehrhaltegurt', 'Endlosschlingen', 'Bandschlingen und Karabinerhaken', 'Feuerwehrleine und Feuerwehrhaltegurt'], correct: [0, 2, 3] },
+  { id: 'GK_R24', cat:"Rettungsgeräte", q: 'Der Gerätesatz „Absturzsicherung“ darf', opts: ['nur von speziell ausgebildetem Personal eingesetzt werden', 'nur bei der Rettung von Personen genutzt werden.', 'bei Feuerwehren gar nicht verwendet werden'], correct: [0] },
+  
+  { id: 'GK_TH1', cat:"Einfache technische Hilfeleistung", q: 'Für welche Einsatzmöglichkeiten findet die Brechstange Verwendung? ', opts: ['Verwendung als Hebel', 'Verwendung zum Stoßen', 'Verwendung um eine Kraft abzufedern', 'Verwendung um Kraft und Weg zu sparen'], correct: [0, 1] },
+  { id: 'GK_TH2', cat:"Einfache technische Hilfeleistung", q: 'Folgende Hinweise zur Sicherheit sind beim Einsatz einer Brechstange zu beachten', opts: ['Beim Einsatz der Brechstange ist Gesichtsschutz zu verwenden', 'Beim Einsatz ist die Klaue nicht zum Stoßen zu benutzen', 'Beim Anheben muss die Last durch Unterbauen gesichert werden', 'Das maximal anzuhebende Gewicht darf nicht mehr als 100 N betragen'], correct: [0, 1, 2] },
+  { id: 'GK_TH3', cat:"Einfache technische Hilfeleistung", q: 'Das Nageleisen dient', opts: ['zum Ziehen von Nägeln', 'Aufbrechen von Holzkonstruktionen', 'Lösen von Verschraubungen', 'Bewegen kleinerer Lasten'], correct: [0, 1, 3] },
+  { id: 'GK_TH4', cat:"Einfache technische Hilfeleistung", q: 'Mit dem im Feuerwehr-Werkzeugkasten enthaltenen Werkzeug lassen sich u.a', opts: ['Rohrverbindungen verschweißen', 'Metallteile vernieten', 'Steine meißeln', 'Drähte trennen'], correct: [2, 3] },
+  { id: 'GK_TH5', cat:"Einfache technische Hilfeleistung", q: 'Die Bestückung des Feuerwehr Elektrowerkzeugkastens', opts: ['dient zum Feststellen der Spannungsfreiheit in Bereichen über 1000 V', 'dient zum Feststellen der Spannungsfreiheit in Bereichen unter 1000 V', 'beinhaltet eine Beschilderung, die freigeschaltete Anlagen kennzeichnet', 'beinhaltet eine Beschilderung, die Photovoltaik-Anlagen im speziellen kennzeichnet'], correct: [1, 2] },
+  { id: 'GK_TH6', cat:"Einfache technische Hilfeleistung", q: 'Beim Einsatz des Einreißhakens', opts: ['ist Gesichtsschutz niemals erforderlich', 'ist Gesichtsschutz erforderlich', 'dürfen sich nicht beteiligte Personen im Wirkungsbereich aufhalten', 'kann generell auf Grundsätze, die einer Unfallverhütung dienen, verzichtet werden'], correct: [1] },
+  { id: 'GK_TH7', cat:"Einfache technische Hilfeleistung", q: 'Mit der Feuerwehraxt ist es möglich:', opts: ['Türen zu öffnen', 'Holz für Abstützungen zu kürzen', 'Die Feuerwehraxt hat heute keine Bedeutung mehr', 'darf nur truppweise eingesetzt werden'], correct: [0] },
+  
+  { id: 'GK_SG1', cat:"Rettung", q: 'Zu den Warngeräten (z.B. technische Hilfeleistung: „Verkehrsunfall“) zählt man', opts: ['Warnschilder', 'Winkerkelle', 'Warndreieck nach StVZO', 'Verkehrsleitkegel'], correct: [0, 1, 2, 3] },
+  { id: 'GK_SG2', cat:"Rettung", q: 'An Einsatzstellen auf Bundesautobahnen (BAB) und Kraftfahrstraßen mit getrennten Richtungsfahrbahnen erfolgt die Absicherung Absicherung entgegen der Fahrtrichtung des fließenden Verkehrs. Welche Entfernungen gelten gemäß Abbildung?', opts: ['A: 200 m, B: ca. 600 m, C: ca. 800 m', 'A: 100 m, B: ca. 300 m, C: ca. 400 m', 'A: 50 m, B: ca. 150 m, C: ca. 200 m', 'A: 25 m, B: ca. 75 m, C: ca. 100 m'], correct: [0] },
+  { id: 'GK_SG3', cat:"Rettung", q: 'Bei Einsatz der Winkerkelle ist zu beachten, dass', opts: ['Winkerkellen zur Verkehrsregelung eingesetzt werden dürfen', 'Winkerkellen nur zur Verkehrssicherung eingesetzt werden dürfen', 'Winkerkellen keine Feuerwehrzulassung haben', 'Winkerkellen nur auf Anweisung der Polizei eingesetzt werden dürfen'], correct: [1] },
+  
+  { id: 'GK_R1', cat:"Rettung", q: 'Beim Einsatz einer Krankentrage ist/sind folgende(r) Punkt(e) zu beachten', opts: ['Der Einsatz der Krankentrage soll möglichst mit der Decke vorbereitet werden', 'Bei der Lagerung einer verletzten Person finden die Regeln der Ersten Hilfe Verwendung', 'Im Regelfall wird die nicht gehfähige Person mit den Füßen voran getragen', 'Im Regelfall wird die nicht gehfähige Person mit dem Kopf voran getragen'], correct: [0, 1, 2] },
+  { id: 'GK_R2', cat:"Rettung", q: 'Das Rettungstuch', opts: ['findet standardmäßig immer Verwendung beim Transport von gehfähigen Verletzten', 'dient einem behelfsmäßigen Transport von mehreren Verletzten gleichzeitig', 'kann sehr gut in ungünstigen räumlichen Verhältnissen eingesetzt werden', 'sollte nach Möglichkeit immer von mindestens drei Feuerwehrangehörigen getragen werden'], correct: [2, 3] },
+  { id: 'GK_R3', cat:"Rettung", q: 'Verletzungen der Wirbelsäule oder des Beckens', opts: ['setzen den Einsatz des Rettungstuches zwingend voraus', 'ist der Einsatz des Rettungstuches auszuschließen', 'setzen nach Möglichkeit eine Absprache mit medizinischem Fachpersonal voraus', 'können generell ohne Rücksprache mit medizinischem Fachpersonal durch die Feuerwehr behandelt werden'], correct: [1, 2] },
+  { id: 'GK_R4', cat:"Rettung", q: 'Die Schleifkorbtrage', opts: ['kann waagerecht und senkrecht benutzt werden', 'kann dort eingesetzt werden, wo herkömmliche Krankentragen schwierig einsetzbar sind', 'hat den Vorteil, dass man einen Patienten mit dieser auf eine herkömmliche Krankentrage gelagert werden kann, ohne den Patienten umlagern zu müssen'], correct: [0, 1, 2] },
+  
+  { id: 'LE1', cat:"Löscheinsatz", q: 'Ein Hydranten Hinweisschild gibt', opts: ['den Durchmesser der Versorgungsleitung und die Wassermenge an', 'den Druck und die Wassermenge an', 'den Durchmesser der Versorgungsleitung und die Lage des Hydranten bezogen auf das Schild an', 'die Lage des Hydranten und den Nennaußendurchmesser der Kupplung an'], correct: [2] },
+  { id: 'LE2', cat:"Löscheinsatz", q: 'B-Schläuche und/oder Schläuche für Schaumrohre werden am Verteiler (in Fließrichtung)', opts: ['an der linken Kupplung angeschlossen', 'an der mittleren Kupplung angeschlossen', 'an der rechten Kupplung angeschlossen', 'nach Weisung des Gruppenführers angeschlossen'], correct: [1] },
+  { id: 'LE3', cat:"Löscheinsatz", q: 'Die Aufstellung des einsatzbereit ausgerüsteten Angrifftrupps bei einem Einsatz mit Bereitstellung gemäß FwDV 3 „Einheiten im Löscheinsatz“ erfolgt', opts: ['hinter dem Fahrzeug', 'am Verteiler', 'an den Strahlrohren (vor dem Schaden-Objekt)', 'am Objekt/Gebäude'], correct: [1] },
+  { id: 'LE4', cat:"Löscheinsatz", q: 'Für das Kuppeln von zwei Saugschläuchen (Herstellen der Saugleitung) ist gemäß FwDV 3 „Einheiten im Löscheinsatz', opts: ['der Maschinist zuständig', 'der Wassertrupp zuständig', 'nur der Wassertruppführer zuständig', 'nur das Wassertruppmitglied zuständig'], correct: [1] },
+  { id: 'LE5', cat:"Löscheinsatz", q: 'Der Schlauchtrupp verlegt Schlauchleitungen für den Angriffstrupp gemäß FwDV 3 „Einheiten im Löscheinsatz“', opts: ['von der Wasserentnahmestelle zur Pumpe', 'vom Trupp zum Verteiler', 'vom Verteiler zum Trupp', 'nur nach Weisung des Gruppenführers'], correct: [1] },
+  { id: 'LE6', cat:"Löscheinsatz", q: 'Der Angriffstrupp verlegt Schlauchleitungen für sich selbst (fehlender Schlauchtrupp) gemäß FwDV 3 „Einheiten im Löscheinsatz“', opts: ['vom Verteiler zur Einsatzstelle', 'vom Trupp zum Verteiler', 'nur nach Weisung des Gruppenführers', 'von der Wasserentnahmestelle zur Pumpe'], correct: [0] },
+  { id: 'LE7', cat:"Löscheinsatz", q: 'Die C-Schlauchleitung des Angriffstrupps zwischen Verteiler und Einsatzobjekt verlegt nach der FwDV 3 „Einheiten im Löscheinsatz“', opts: ['der Schlauchtrupp', 'der Wassertrupp', 'der Angriffstrupp selbst (bei fehlendem Schlauchtrupp)', 'ein durch den Gruppenführer beauftragter Trupp'], correct: [0, 2] },
+  { id: 'LE8', cat:"Löscheinsatz", q: 'Der Innenangriff ist einem Außenangriff vorzuziehen, wei', opts: ['keine Leitern erforderlich sind', 'der Brandherd gezielter erreicht wird', 'beim Außenangriff die Fensterscheiben beschädigt werden', 'der Wasserschaden geringer ist'], correct: [1, 3] },
+  { id: 'LE9', cat:"Löscheinsatz", q: 'Ein Brandraum darf', opts: ['nur mit äußerster Vorsicht betreten werden', 'bei hoher Dringlichkeit im Ermessen jeder Einsatzkraft betreten werden', 'nur mit Zustimmung des Melders betreten werden', 'unter Verwendung geeigneter Schutzausrüstung und -bekleidung betreten werden'], correct: [0, 3] },
+  { id: 'LE10', cat:"Löscheinsatz", q: 'Im Alarmfall ist beim Aufsitzen', opts: ['die in der Feuerwehr-Satzung festgelegte Sitzordnung einzuhalten', 'durch die Sitzordnung die grundsätzliche Aufgabenverteilung zugewiesen', 'die Beachtung der Sitzordnung grundsätzlich unwichtig, weil der Gruppenführer während der Anfahrt zur Einsatzstelle die Einteilung und Aufgabenverteilung sowieso vornimmt', 'darauf zu achten, dass durch die einzelnen Feuerwehrangehörigen nur die Plätze eingenommen werden, deren (gemäß Sitzordnung) zugewiesenen Funktionen sie, u.a. aufgrund ihres Ausbildungsstandes, auch übernehmen können'], correct: [1, 3] },
+  { id: 'LE11', cat:"Löscheinsatz", q: 'Für die Wasserversorgung zwischen Feuerlöschkreiselpumpe und Hydrant sowie Feuerlöschkreiselpumpe und Verteiler kommt nach der FwDV 3 „Einheiten im Löscheinsatz“', opts: ['der Schlauchtrupp zum Einsatz', 'der Wassertrupp zum Einsatz', 'der Angriffstrupp zum Einsatz', 'der Maschinist (Unterstützung beim Aufbau der Wasserversorgung) zum Einsatz'], correct: [1, 3] },
+  { id: 'LE12', cat:"Löscheinsatz", q: 'Der Strahlrohrführer öffnet das Strahlrohr zur Brandbekämpfung', opts: ['an der Rauchgrenze', 'sobald er Wasser am Strahlrohr hat', 'wenn er Flammen und / oder Glut erkennt', 'unter Beachtung von Weisungen des Truppführers'], correct: [2, 3] },
+  { id: 'LE13', cat:"Löscheinsatz", q: 'Nach FwDV 3 „Einheiten im Löscheinsatz“ obliegen dem Wassertrupp folgende Aufgaben:', opts: ['Retten', 'Bringt auf Befehl tragbare Leitern in Stellung', 'Stellt die Wasserversorgung vom Löschfahrzeug zum Verteiler her', 'Stellt die Wasserversorgung zwischen Löschfahrzeug und Wasserentnahmestelle her'], correct: [0, 1, 2, 3] },
+  { id: 'LE14', cat:"Löscheinsatz", q: 'Gemäß FwDV 3 „Einheiten im Löscheinsatz“ sind zu unterscheiden:', opts: ['der Einsatz mit und ohne Bereitstellung', 'Einsätze neben- und hintereinander bzw. getrennt und geschlossen', 'Selbstständiger Trupp, Staffel und Gruppe und Zug', 'Zugeinsatzformen, technische Hilfeleistung und Strahlenschutzeinsätze'], correct: [0, 2] },
+  { id: 'LE15', cat:"Löscheinsatz", q: '„Schlauchreserven“ müssen berücksichtigt werden,', opts: ['damit die Schläuche sauber in Buchten liegen können', 'damit der vorgehende Trupp die notwendige Beweglichkeit und Reichweite erhält', 'um einem möglichen Mangel an Rollschläuchen vorzubeugen', 'um für beschädigte Feuerlöschschläuche Ersatz vorzuhalten'], correct: [1] },
+  
+  { id: 'TH1', cat:"Technische Hilfeleistung", q: 'Eine unter elektrischer Spannung stehende Leitung ist vollständig von dem Leitungsroller abzurollen', opts: ['wegen der Gefahr einer unzulässig hohen Erwärmung', 'wegen einer Gefährdung des Flugfunkverkehrs', 'zwecks Sichtkontrolle auf Beschädigungen', 'zwecks Kontrolle der Länge der Leitung'], correct: [0] },
+  { id: 'TH2', cat:"Technische Hilfeleistung", q: 'Die Sicherungsaufgaben werden bei der technischen Hilfeleistung im Allgemeinen vom', opts: ['Angriffstrupp wahrgenommen', 'Wassertrupp wahrgenommen', 'Schlauchtrupp wahrgenommen', 'Melder und Maschinist wahrgenommen'], correct: [1] },
+  { id: 'TH3', cat:"Technische Hilfeleistung", q: 'Zu den Aufgaben des Wassertrupps bei der technischen Hilfeleistung zählen', opts: ['Sicherung der Einsatzstelle gegen fließenden Straßenverkehr', 'Sicherung der Einsatzstelle gegen Gefahren (z.B. Dunkelheit', 'Sicherung der Einsatzstelle gegen Brandgefahr', 'Lagefeststellung sowie Informationsübertragung'], correct: [0, 1, 2] },
+  { id: 'TH4', cat:"Technische Hilfeleistung", q: 'Zu den Aufgaben des Maschinisten gehört im technischen Hilfeleistungseinsatz', opts: ['die Einsatzstelle zu sichern (z.B. Einschalten der Warnblinkanlage, Fahrlicht und blaues Blinklicht)', 'Unterstützung bei der Entnahme der Geräte', 'Unterstützung bei der Entnahme (Vornahme) des Schnellangriffsschlauches', 'die Verantwortung für die richtige Verlastung von eingesetzten Einsatzmitteln nach dem Einsatz'], correct: [0, 1, 2, 3] },
+  { id: 'TH5', cat:"Technische Hilfeleistung", q: 'An Einsatzstellen hat der eingesetzte Trupp beim Einsatz von hydraulischen Rettungsgeräten folgendes zu beachten:', opts: ['Vorgehen nach eigenem Ermessen', 'Vorgehen nach Weisung des zuständigen Gruppenführers', 'Vorgehen nur nach Wunsch der Unfallopfe', 'ggf. Vorgehen nach Absprache des GF mit dem Rettungsdienstpersonal'], correct: [1, 3] },
+  { id: 'TH6', cat:"Technische Hilfeleistung", q: 'Welche Aufgaben übernimmt der Schlauchtrupp bei TH – Einsätzen?', opts: ['Er sorgt für die Bereitstellung der erforderlichen Einsatzmittel', 'Er stellt den Brandschutz sicher', 'Er wird zum Geräte – Trupp', 'Er übernimmt nur die Betreuung von betroffenen Personen'], correct: [0, 2] },
+  
+  { id: 'G1', cat:"Verhalten bei Gefahr", q: 'Als „Trümmerschatten“ wird bezeichne', opts: ['ein durch Einsturz bedrohter Bereich, nur innerhalb von Gebäuden', 'ein durch Trümmer schwer einsehbarer Bereich (abgeschatteter) Bereich', 'ein durch Einsturz bedrohter Bereich', 'Bereich, in dem man vor herabfallenden Trümmern sicher abgeschattet ist'], correct: [2] },
+  { id: 'G2', cat:"Verhalten bei Gefahr", q: 'Schutzmaßnahmen gegen die Gefahren der Elektrizität sind unter anderem', opts: ['die Strahlrohreinstellung "Sprühstrahl", durch die alle Risiken ausgeschlossen sind', 'die Einhaltung erforderlicher Mindestabstände', 'die Verwendung feuerwehreigener Stromquellen', 'Freischaltung und Erdung'], correct: [1,2,3] },
+  { id: 'G4', cat:"Verhalten bei Gefahr", q: 'Feuerwehrangehörige haben sich im Einsatz grundsätzlich so zu verhalten, dass', opts: ['Eigengefährdungen und die Gefährdung anderer am Einsatz beteiligter Personen vermieden werden', 'ein Einsatz geordnet abläuft', 'das Ansehen der Feuerwehr nicht geschädigt wird', 'das die Schnelligkeit Vorrang vor allem anderen hat'], correct: [0,1,2] },
+  { id: 'G6', cat:"Verhalten bei Gefahr", q: 'Angstreaktion', opts: ['kann bei Menschen und Tieren auftreten', 'steht für Kurzschlusshandlungen von Einzelpersonen', 'führt niemals zu einem Schock', 'führt in einem verschwindend geringen Umfang zu unüberlegten Handlungen'], correct: [0,1] },
+  { id: 'G7', cat:"Verhalten bei Gefahr", q: 'Ausbreitung', opts: ['(z.B. die eines Brandes) ist immer räumlich eingegrenzt', 'z.B. die eines Brandes) ist die räumliche Ausbreitung über die Brandausbruchstelle hinaus', 'kann die Folge des Auslaufens von brennbaren Flüssigkeiten sein', 'zählt man nicht zu den Gefahren der Einsatzstelle'], correct: [1,2] },
+  { id: 'G8', cat:"Verhalten bei Gefahr", q: 'Atomare Strahlung', opts: ['ist messtechnisch erfassbar', 'ist messtechnisch nicht erfassbar', 'ist nur im ortsfesten Bereich messtechnisch erfassbar', 'ist im ortsfesten und Transportbereichen nicht messtechnisch erfassbar'], correct: [0] },
+  { id: 'G9', cat:"Verhalten bei Gefahr", q: 'Chemische Stoffe', opts: ['beinhalten die Gefahr, Schädigungen durch Reizwirkung an Oberflächen entstehen zu lassen', 'beinhalten die Gefahr, Schädigungen durch Ätzwirkung an Oberflächen entstehen zu lassen', 'beinhalten Gefahren, die insbesondere auf die Art und Menge sowie Konzentration zurückzuführen sind', 'sind durch spezielle Kennzeichnungen erkennbar'], correct: [0,1,3] },
+  { id: 'G10', cat:"Verhalten bei Gefahr", q: 'Zur Gefahr der Einsatzstelle „Erkrankung/Verletzung“ zählt/zählen', opts: ['mechanische Verletzungen', 'Vergiftungen', 'Übergewicht', 'Infektionen'], correct: [0,1,3] },
+  { id: 'G11', cat:"Verhalten bei Gefahr", q: 'Explosionsgefahren bestehen', opts: ['wenn eine explosionsfähige Atmosphäre vorliegt', 'wenn ein Gemisch von brennbaren Gasen/Dämpfen mit Luft innerhalb der Explosionsgrenzen vorliegt', 'beim Abkühlen von Druckgasflasche', 'ein Fliehkraftzerfall droht'], correct: [0,1,3] },
+  { id: 'G12', cat:"Verhalten bei Gefahr", q: 'Einsturzgefahren', opts: ['können ausschließlich bei Gebäuden auftreten', 'sind möglicherweise auch bei Verkehrsunfällen zu beachten (instabile Lage von Unfallfahrzeugen)', 'können durch falsches Vorgehen der Feuerwehr entstehen', 'sind auch bei gegebener Absturzgefahr gegeben'], correct: [1,2,3] },
+  { id: 'G13', cat:"Verhalten bei Gefahr", q: 'An einer Einsatzstelle der Feuerwehr kann eine Einsturzgefahr', opts: ['durch den Abbrand von Bauteilen entstehen', 'durch eine schnelle Materialprüfung ausgeschlossen werden', 'durch das Einbringen von Löschwasser in ein Gebäude nicht entstehen', 'durch die Schwächung von Knotenpunkten in einer Konstruktion gegeben sein'], correct: [0,3] },
+  { id: 'G14', cat:"Verhalten bei Gefahr", q: 'Gefahren durch Elektrizität können erkannt werden', opts: ['durch spezielle Gefahren- bzw. Hinweisschilder', 'anhand von möglichen Defekten (Fehlfunktionen) an elektrischen Betriebsmitteln', 'anhand von Beschädigungen von Elektroanlagen bzw. -leitungen', 'anhand von möglichen Defekten (Fehlfunktionen) in Elektroinstallationen'], correct: [0,1,2,3] },
+  
+  { id: 'UVV1', cat:"Unfallversicherung", q: 'Die UVV-Feuerwehren hat Gültigkeit', opts: ['nur bei Übungen', 'bei Übungen, Ausbildung und im Einsatz', 'nur im Einsatz', 'bei Feuerwehrwettbewerben'], correct: [1,3] },
+  { id: 'UVV2', cat:"Unfallversicherung", q: 'Bei einem Feuerwehrdienstunfall', opts: ['kann bei Bagatellverletzungen auf eine Meldung (Eintrag Verband- bzw. Dienstbuch) verzichtet werden', 'muss, sofern ärztliche Hilfe in Anspruch genommen worden ist, spätestens nach drei Tagen eine Unfallanzeige auf dem Dienstweg bei der Feuerwehr-Unfallkasse Niedersachsen eingereicht werden', 'entscheidet ausschließlich der Ortsbrandmeister, wie im Einzelfall zu verfahren ist', 'sind auch bei Bagatellunfällen (mit geringen Verletzungen) die notwendigen bzw. vorgeschriebenen weiteren Maßnahmen einzuleiten'], correct: [1,3] },
+  { id: 'UVV3', cat:"Unfallversicherung", q: 'Der Unfallversicherungsschutz im Rahmen der Tätigkeiten bei den Freiwilligen Feuerwehren', opts: ['erstreckt sich auf Arbeitsunfälle (Einsatz, Übungsdienst)', 'erstreckt sich ausschließlich auf Wegeunfälle (auf dem Weg zum Feuerwehrdienst)', 'auch auf Berufskrankheiten', 'erstreckt sich nur auf Schadensereignisse, die durch die gesetzliche Krankenversicherung nicht abgedeckt sind'], correct: [0,2] },
+  { id: 'UVV4', cat:"Unfallversicherung", q: 'Als versicherte Person im Rahmen der Unfallversicherung', opts: ['bezeichnet man alle im Feuerwehreinsatz tätigen Personen bei der Erfüllung der Versicherungsvoraussetzungen', 'die Teilnehmer einschließlich der Ausbilder an feuerwehrtechnischen Ausbildungsveranstaltungen', 'Helfer, die zur Unterstützung im Einsatzfall herangezogen werden', 'bezeichnet man alle Personen, die ggf. nichts mit einem Feuerwehreinsatz zu tun haben'], correct: [0,1,2] },
+  { id: 'UVV5', cat:"Unfallversicherung", q: 'Als versicherte Tätigkeiten (Unfallversicherungsschutz) sind zu nennen:', opts: ['Angeordneter Ausbildungs- und Übungsdienst', 'Dienstsport (zwecks körperlicher Ertüchtigung)', 'Sitzungen der Gremien einer Feuerwehr', 'sonstige dienstliche Veranstaltungen'], correct: [0,1,2,3] },
+  { id: 'UVV6', cat:"Unfallversicherung", q: 'Voraussetzungen für den Leistungsanspruch im Einzelfall (Unfallversicherungsschutz) ist:', opts: ['Verrichtung einer Freizeittätigkeit vor einem Feuerwehreinsatz', 'Verrichtung einer versicherten Tätigkeit', 'Verrichtung einer nicht versicherten Tätigkeit nach einem Feuerwehreinsatz', 'das Vorliegen eines Unfalls'], correct: [1,3] },
+  { id: 'UVV7', cat:"Unfallversicherung", q: 'Bei einem Schadenseintritt (Unfall) im Feuerwehrdienst', opts: ['gilt es, eine Meldung an den unmittelbaren Vorgesetzten (Trupp-, Gruppenführer, Ausbilder) abzugeben', 'ist, soweit erforderlich, der Arzt aufzusuchen', 'ist dem behandelnden Arzt, sofern möglich, mitzuteilen, dass es sich um einen Feuerwehrdienstunfall handelt', 'ist bei einer Behandlung durch einen Arzt innerhalb von drei Tagen eine Unfallanzeige auf dem Dienstweg bei der (Feuerwehr-Unfallkasse Niedersachsen) FUK einzureichen'], correct: [0,1,2,3] },
+  
+];
+
+let order = [];
+let current = 0;
+let selected = new Set();
+let results = JSON.parse(localStorage.getItem('tm_results_pro') || '{}');
+let isRandom = false;
+
+// Berechnet die Liste der noch offenen Fragen
+function updateOrder(forceAll = false) {
+  if (forceAll) {
+    order = questions.map((_, i) => i);
+  } else {
+    order = [];
+    questions.forEach((q, i) => {
+      // Nur Fragen aufnehmen, die noch nicht richtig gelöst wurden
+      if (results[q.id] !== 'correct') {
+        order.push(i);
+      }
+    });
+  }
+
+  if (isRandom) order.sort(() => Math.random() - 0.5);
+  current = 0;
+}
+
+function init() { 
+  updateStats(); 
+  updateOrder(); 
+  renderQuestion(); 
+}
+
+function updateStats() {
+  const vals = Object.values(results);
+  const r = vals.filter(v => v === 'correct').length;
+  const f = vals.filter(v => v === 'wrong').length;
+  document.getElementById('stat-r').innerText = r;
+  document.getElementById('stat-f').innerText = f;
+  document.getElementById('stat-o').innerText = 164 - r; // Zeigt an, wieviele Fragen noch zum Sieg fehlen
+}
+
+function renderQuestion() {
+  const container = document.getElementById('options');
+  
+  // Wenn keine Fragen mehr übrig sind
+  if (order.length === 0) {
+    document.getElementById('q-cat').innerText = "FERTIG";
+    document.getElementById('q-num').innerText = "- / -";
+    document.getElementById('q-text').innerText = "Glückwunsch! Du hast alle Fragen richtig beantwortet. 🎉";
+    container.innerHTML = '<p style="text-align:center; color:var(--muted); margin-top:20px;">Setze den Lernstand zurück, um von vorn zu beginnen.</p>';
+    document.getElementById('btn-check').classList.add('hidden');
+    document.getElementById('btn-next').classList.add('hidden');
+    return;
+  }
+
+  const q = questions[order[current]];
+  document.getElementById('q-cat').innerText = q.cat.toUpperCase();
+  document.getElementById('q-num').innerText = `${current + 1} / ${order.length}`;
+  document.getElementById('q-text').innerText = q.q;
+  
+  container.innerHTML = '';
+  selected.clear();
+  
+  q.opts.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = `<div class="checkbox"></div><span>${opt}</span>`;
+    div.onclick = () => {
+      if(!document.getElementById('btn-next').classList.contains('hidden')) return;
+      div.classList.toggle('selected');
+      if(selected.has(i)) selected.delete(i); else selected.add(i);
+    };
+    container.appendChild(div);
+  });
+  
+  document.getElementById('btn-check').classList.remove('hidden');
+  document.getElementById('btn-next').classList.add('hidden');
+}
+
+function checkAnswer() {
+  if (order.length === 0) return;
+  
+  const q = questions[order[current]];
+  const optsElements = document.querySelectorAll('.option');
+  let isCorrect = true;
+
+  q.opts.forEach((_, i) => {
+    const correct = q.correct.includes(i);
+    const sel = selected.has(i);
+    if(correct) { 
+      optsElements[i].classList.add('reveal'); 
+      if(!sel) isCorrect = false; 
+    }
+    else if(sel) { 
+      optsElements[i].classList.add('wrong'); 
+      isCorrect = false; 
+    }
+  });
+
+  results[q.id] = isCorrect ? 'correct' : 'wrong';
+  localStorage.setItem('tm_results_pro', JSON.stringify(results));
+  updateStats();
+  
+  document.getElementById('btn-check').classList.add('hidden');
+  document.getElementById('btn-next').classList.remove('hidden');
+}
+
+function nextQuestion() {
+  // Wenn wir am Ende der aktuellen Liste sind, Liste neu filtern (damit die soeben gelöste Frage verschwindet)
+  if (current >= order.length - 1) {
+    updateOrder(); 
+  } else {
+    current++;
+  }
+  renderQuestion();
+  window.scrollTo(0,0);
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('quiz-view').classList.toggle('hidden', t !== 'quiz');
+  document.getElementById('overview-view').classList.toggle('hidden', t !== 'overview');
+  
+  if(t === 'overview') {
+    renderOverview();
+  } else {
+    // Wenn man manuell auf "Training" klickt, Filter aktualisieren, außer man kommt von jump()
+    if(order.length !== 1) { 
+        updateOrder();
+    }
+    renderQuestion();
+  }
+}
+
+function toggleRandom() {
+  isRandom = !isRandom;
+  document.getElementById('rand-txt').innerText = isRandom ? "AN" : "AUS";
+  updateOrder();
+  renderQuestion();
+}
+
+function renderOverview() {
+  const g = document.getElementById('overview-grid');
+  g.innerHTML = questions.map((q, i) => {
+    let c = results[q.id] || '';
+    return `<div class="grid-item ${c}" onclick="jump(${i})">${q.id}</div>`;
+  }).join('');
+}
+
+function jump(i) { 
+  order = [i]; // Temporäre Liste mit nur dieser einen Frage (auch wenn sie schon grün ist)
+  current = 0; 
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-quiz').classList.add('active');
+  document.getElementById('quiz-view').classList.remove('hidden');
+  document.getElementById('overview-view').classList.add('hidden');
+  renderQuestion(); 
+}
+
+function resetProgress() {
+  if(confirm("Bist du sicher? Alle deine Ergebnisse werden gelöscht!")) {
+    results = {};
+    localStorage.removeItem('tm_results_pro');
+    updateStats();
+    updateOrder();
+    renderOverview();
+    renderQuestion();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
